@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %} Order Creation{% endblock %}
+
+{% block content %} 
+<div class="shadow-md p-4 bg-orange-300">
+    <h2 class="text-indigo-600 text-2xl font-semibold mb-4 ">Checkout</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit" class="bg-indigo-800 text-white px-4 py-2 rounded mt-0.5">Place Order</button>
+    </form>
+</div>
+
+<style>
+    form p{
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
