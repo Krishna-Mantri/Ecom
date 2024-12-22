@@ -3,44 +3,71 @@
 {% block title %}MY CART{% endblock %}
 
 {% block content %}
-    <h2 class="text-2xl font-semibold mb-4">My Cart</h2>
+<section class="container mx-auto py-6">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">My Cart</h2>
 
     {% if cart %}
-    <ul class="space-y-4">
+    <!-- Cart Items -->
+    <ul class="space-y-6 bg-white shadow-md rounded-lg p-6">
         {% for item in cart.items.all %}
-        <li class="flex items-center p-4">
+        <li class="flex items-start gap-4 border-b pb-4 last:border-b-0">
+            <!-- Product Image -->
             {% if item.product.image %}
-            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-24 mr-4">
+            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-28 h-28 object-cover rounded-md">
+            {% else %}
+            <div class="w-28 h-28 bg-gray-200 flex items-center justify-center text-gray-500 text-sm rounded-md">
+                No Image
+            </div>
             {% endif %}
-            <div class="flex-grow">
-                <a href="{% url 'products:product_detail' item.product.id item.product.slug %}">
-                    <h3 class="font-semibold text-lg">{{ item.product.name }}</h3>
-                </a>
-                <p class="text-gray-700">{{ item.product.description }}</p>
-                <p class="text-indigo-600">INR {{ item.product.price }}/-</p>
-                <p class="text-gray-600">Quantity: {{ item.quantity }}</p>
-            
 
-    <div class="flex-shrink">
-        <form action="{% url 'cart:remove' item.id %}" method="post">
-            {% csrf_token %}
-            <button type="submit" class="bg-red-600 text-white px-4 py-1 text-xs rounded">X</button>
-        </form>
-    </div>
+            <!-- Product Details -->
+            <div class="flex-grow">
+                <a href="{% url 'products:product_detail' item.product.id item.product.slug %}" 
+                   class="text-lg font-semibold text-gray-800 hover:text-indigo-600 transition">
+                    {{ item.product.name }}
+                </a>
+                <p class="text-sm text-gray-600 mt-1">{{ item.product.description|truncatewords:10 }}</p>
+                <p class="text-lg text-indigo-600 font-bold mt-2">INR {{ item.product.price }}</p>
+                <p class="text-sm text-gray-700">Quantity: <span class="font-medium">{{ item.quantity }}</span></p>
+            </div>
+
+            <!-- Remove Button -->
+            <div class="flex-shrink-0">
+                <form action="{% url 'cart:remove' item.id %}" method="post" class="text-right">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-md text-xs font-semibold shadow hover:bg-red-600 transition">
+                        Remove
+                    </button>
+                </form>
             </div>
         </li>
         {% endfor %}
     </ul>
 
-    <p><strong>Total Price: INR {{cart.get_total_price}}/-</strong></p>
-    {% else %}
-    <h3>Your Cart is Empty</h3>
-    {% endif %}
+    <!-- Total Price -->
+    <div class="flex justify-between items-center mt-6 bg-gray-100 p-4 rounded-md shadow-sm">
+        <p class="text-lg font-bold text-gray-800">Total Price:</p>
+        <p class="text-xl font-bold text-indigo-600">INR {{ cart.get_total_price }}</p>
+    </div>
 
-    {% if cart %}
-    <form action="{% url "orders:create_order" %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded mt-0.5">Pay</button>
-    </form>
+    <!-- Checkout Button -->
+    <div class="mt-6 text-right">
+        <form action="{% url 'orders:create_order' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="bg-green-500 text-white px-6 py-3 rounded-md text-lg font-semibold shadow hover:bg-green-600 transition">
+                Proceed to Checkout
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <!-- Empty Cart Message -->
+    <div class="text-center py-12 bg-gray-50 rounded-lg shadow-md">
+        <h3 class="text-2xl font-bold text-gray-700 mb-4">Your Cart is Empty</h3>
+        <p class="text-gray-600">Browse our collection to add items to your cart.</p>
+        <a href="{% url 'products:product_list' %}" class="mt-6 inline-block bg-indigo-500 text-white px-6 py-3 rounded-md text-lg font-semibold shadow hover:bg-indigo-600 transition">
+            Shop Now
+        </a>
+    </div>
     {% endif %}
+</section>
 {% endblock %}

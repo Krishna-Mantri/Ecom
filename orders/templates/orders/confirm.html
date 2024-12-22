@@ -1,59 +1,74 @@
 {% extends "base.html" %}
+
 {% block title %}
 Order Confirmation
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col lg:flex-row gap-4 p-4">
-    <div class="flex flex-col space-y-4 w-full lg:w-1/2">
-        <div class="shadow-md p-4 border-2 border-double bg-gray-200">
-            <h2 class="text-center text-2xl font-serif underline underline-offset-1">Order Confirmation</h2>
-            <h3 class="font-semibold">Order ID: #{{ order.id }}</h3>
-            <p><strong>Customer:</strong> {{ order.full_name }}</p>
-            <p><strong>Email:</strong> {{ order.email }}</p>
-            <p><strong>Address:</strong> {{ order.address }}</p>
-            <p><strong>Order Date:</strong> {{ order.created_at }}</p>
+<div class="container mx-auto p-6 bg-gray-50">
+    <div class="flex flex-col lg:flex-row gap-8">
+
+        <!-- Order Details Section -->
+        <div class="flex flex-col w-full lg:w-2/3 space-y-6">
+            <!-- Order Information -->
+            <div class="shadow-lg p-6 rounded-lg bg-white border border-gray-200">
+                <h2 class="text-3xl font-bold text-center text-indigo-600 mb-4">Order Confirmation</h2>
+                <div class="text-lg">
+                    <p><strong class="text-gray-700">Order ID:</strong> #{{ order.id }}</p>
+                    <p><strong class="text-gray-700">Customer:</strong> {{ order.full_name }}</p>
+                    <p><strong class="text-gray-700">Email:</strong> {{ order.email }}</p>
+                    <p><strong class="text-gray-700">Address:</strong> {{ order.address }}</p>
+                    <p><strong class="text-gray-700">Order Date:</strong> {{ order.created_at }}</p>
+                </div>
+            </div>
+
+            <!-- Items in Your Order -->
+            <div class="shadow-lg p-6 rounded-lg bg-white border border-gray-200">
+                <h3 class="text-2xl font-semibold text-indigo-600 mb-4">Items in Your Order:</h3>
+                <ul class="space-y-4">
+                    {% for item in order.items.all %}
+                    <li class="flex justify-between">
+                        <span class="font-medium">{{ item.quantity }} x {{ item.product.name }}</span>
+                        <span class="text-gray-600">Price: INR {{ item.price }}</span>
+                        <span class="text-gray-600">Subtotal: INR {{ item.get_cost }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-4 text-right font-semibold text-xl">
+                    <p class="text-gray-800">Total: INR {{ order.get_total_cost }}</p>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="shadow-lg p-6 rounded-lg bg-white border border-gray-200">
+                {% if not order.paid %}
+                <h3 class="text-2xl font-semibold text-indigo-600 mb-4">Complete Your Payment</h3>
+                <p class="text-lg text-gray-700 mb-4">Please click the button below to complete the payment for your order.</p>
+                <button id="rzp-button" class="w-full p-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-300">Pay Now</button>
+                <div id="loading-message" class="hidden text-center text-blue-500 mt-4">Processing your payment, please wait...</div>
+                {% else %}
+                <p class="text-lg font-medium text-green-600">Payment Status: Paid</p>
+                {% endif %}
+            </div>
         </div>
 
-        <!-- Items in Your Order -->
-        <div class="shadow-lg p-4 border-4 bg-gray-200">
-            <h3 class="font-serif underline text-lg">Items in Your Order:</h3>
-            <ul class="space-y-2">
-                {% for item in order.items.all %}
-                <li>
-                    <strong>{{ item.quantity }} x {{ item.product.name }}</strong>
-                    <br>
-                    Price: INR {{ item.price }}<br>
-                    Subtotal: INR {{ item.get_cost }}
-                </li>
-                {% endfor %}
-            </ul>
-            <p><strong class="overline">Total: INR {{ order.get_total_cost }}</strong></p>
-
-            <!-- Razorpay Payment Button -->
-            {% if not order.paid %}
-            <h2 class="font-medium text-blue-500">Complete Your Payment</h2>
-            <h3>Please click the button below to complete the payment.</h3>
-            <button id="rzp-button" class="shadow-md p-2 rounded-md bg-green-600">Pay Now</button>
-            {% else %}
-            <p><strong>Payment Status:</strong> Paid</p>
-            {% endif %}
+        <!-- Product Images Section -->
+        <div class="hidden lg:block w-full lg:w-1/3 space-y-6">
+            <div class="bg-rose-100 p-6 rounded-lg shadow-lg">
+                <h3 class="text-2xl font-semibold text-center text-indigo-600 mb-4">Your Products</h3>
+                <ul class="space-y-4">
+                    {% for item in order.items.all %}
+                    <li class="flex items-center space-x-4">
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-20 h-20 object-contain rounded-md border border-gray-300">
+                        <span class="text-gray-800 font-semibold">{{ item.product.name }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
-    </div>
 
-    <!-- Right Side: Product Images -->
-    <div class="shadow-md border bg-rose-200 p-4 w-full lg:w-1/2">
-        <ul class="space-y-4">
-            {% for item in order.items.all %}
-            <li class="flex items-center space-x-4">
-                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-40 h-24 object-contain rounded">
-                <span class="text-gray-700 font-semibold ">{{ item.product.name }}</span>
-            </li>
-            {% endfor %}
-        </ul>
     </div>
 </div>
-
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
@@ -65,6 +80,9 @@ Order Confirmation
         "description": "Order #{{ order.id }}",
         "order_id": "{{ order.razorpay_order_id }}",  // Razorpay order ID
         "handler": function (response) {
+            // Show loading message
+            document.getElementById("loading-message").classList.remove("hidden");
+
             // Post payment details to the server for verification
             fetch("{% url 'orders:order_confirmation' order.id %}", {
                 method: "POST",
@@ -76,16 +94,21 @@ Order Confirmation
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === "Payment successful!") {
-                    alert(data.status);
-                    window.location.reload();  // Reload page to reflect updated status
+                // Hide loading message
+                document.getElementById("loading-message").classList.add("hidden");
+
+                if (data.status === "Payment successful") {
+                    alert("Payment successful! Thank you for your order.");
+                    window.location.href="{% url 'products:product_list' %}";  // Redirect to list page
                 } else {
-                    alert("Payment verification failed. Please try again.");
+                    alert("Payment verification failed. Please try again or contact support.");
                 }
             })
             .catch(error => {
                 console.error("Payment Error:", error);
-                alert("An error occurred during payment.");
+                alert("An unexpected error occurred during payment. Please try again later.");
+                // Hide loading message
+                document.getElementById("loading-message").classList.add("hidden");
             });
         },
         "prefill": {
@@ -95,6 +118,11 @@ Order Confirmation
         },
         "theme": {
             "color": "#F37254"
+        },
+        "modal": {
+            "ondismiss": function () {
+                alert("Payment process was cancelled. Please try again.");
+            }
         }
     };
 
@@ -104,4 +132,5 @@ Order Confirmation
         e.preventDefault();
     };
 </script>
+
 {% endblock %}
