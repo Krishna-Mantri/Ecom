@@ -1,2 +1,3 @@
 # Ecom
-e-commerce site
+check the my-new-branch for the ecommerce project
+
